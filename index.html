@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web3 Unit Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f6f8fa;
+            color: #24292f;
+        }
+
+        .card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+        }
+
+        input, select, button {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-top: 8px;
+            font-size: 16px;
+        }
+
+        label {
+            display: block;
+            margin-top: 16px;
+            font-weight: bold;
+        }
+
+        button {
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f1f8ff;
+            border-radius: 8px;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Web3 Unit Converter</h1>
+
+        <label for="value">Value</label>
+        <input id="value" type="text" placeholder="Enter value">
+
+        <label for="decimals">Decimals</label>
+        <input id="decimals" type="number" min="0" max="36" value="18">
+
+        <label for="mode">Conversion</label>
+        <select id="mode">
+            <option value="toRaw">Token → Raw</option>
+            <option value="fromRaw">Raw → Token</option>
+        </select>
+
+        <button onclick="convert()">Convert</button>
+
+        <div id="result">Result will appear here.</div>
+    </div>
+
+    <script>
+        function convert() {
+            const value = document.getElementById("value").value.trim();
+            const decimals = Number(document.getElementById("decimals").value);
+            const mode = document.getElementById("mode").value;
+            const result = document.getElementById("result");
+
+            try {
+                if (!value) {
+                    throw new Error("Please enter a value.");
+                }
+
+                if (!Number.isInteger(decimals) || decimals < 0 || decimals > 36) {
+                    throw new Error("Decimals must be between 0 and 36.");
+                }
+
+                const scale = 10n ** BigInt(decimals);
+
+                if (mode === "toRaw") {
+                    if (!/^\d+(\.\d+)?$/.test(value)) {
+                        throw new Error("Invalid token amount.");
+                    }
+
+                    const [whole, fraction = ""] = value.split(".");
+
+                    if (fraction.length > decimals) {
+                        throw new Error("Too many decimal places.");
+                    }
+
+                    const padded = fraction.padEnd(decimals, "0");
+
+                    const raw =
+                        BigInt(whole) * scale +
+                        BigInt(padded || "0");
+
+                    result.textContent = raw.toString();
+                } else {
+                    const raw = BigInt(value);
+
+                    const whole = raw / scale;
+                    const fraction = raw % scale;
+
+                    if (fraction === 0n) {
+                        result.textContent = whole.toString();
+                        return;
+                    }
+
+                    const fractionText = fraction
+                        .toString()
+                        .padStart(decimals, "0")
+                        .replace(/0+$/, "");
+
+                    result.textContent = `${whole}.${fractionText}`;
+                }
+            } catch (error) {
+                result.textContent = error.message;
+            }
+        }
+    </script>
+</body>
+</html>
